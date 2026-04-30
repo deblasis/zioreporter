@@ -85,3 +85,45 @@ test "TestSuite totalDuration" {
     try suite.add(.{ .name = "t2", .passed = true, .duration_ns = 3000 });
     try std.testing.expectEqual(@as(u64, 8000), suite.totalDuration());
 }
+
+
+test "TestSuite all passed" {
+    var suite: TestSuite(20) = .{};
+    for (0..10) |i| {
+        try suite.add(.{ .name = "test", .passed = true, .duration_ns = @intCast(i * 1000) });
+    }
+    try std.testing.expectEqual(@as(usize, 10), suite.passed());
+    try std.testing.expectEqual(@as(usize, 0), suite.failed());
+}
+
+test "TestSuite all failed" {
+    var suite: TestSuite(20) = .{};
+    for (0..5) |_| {
+        try suite.add(.{ .name = "test", .passed = false, .error_message = "fail" });
+    }
+    try std.testing.expectEqual(@as(usize, 0), suite.passed());
+    try std.testing.expectEqual(@as(usize, 5), suite.failed());
+}
+
+test "TestSuite mixed results" {
+    var suite: TestSuite(20) = .{};
+    try suite.add(.{ .name = "t1", .passed = true, .duration_ns = 100 });
+    try suite.add(.{ .name = "t2", .passed = false, .duration_ns = 200, .error_message = "err" });
+    try suite.add(.{ .name = "t3", .passed = true, .duration_ns = 300 });
+    try std.testing.expectEqual(@as(usize, 2), suite.passed());
+    try std.testing.expectEqual(@as(usize, 1), suite.failed());
+    try std.testing.expectEqual(@as(u64, 600), suite.totalDuration());
+}
+
+test "TestSuite too many tests" {
+    var suite: TestSuite(2) = .{};
+    try suite.add(.{ .name = "t1", .passed = true });
+    try suite.add(.{ .name = "t2", .passed = true });
+    try std.testing.expectError(error.TooManyTests, suite.add(.{ .name = "t3", .passed = true }));
+}
+
+test "TestEntry defaults" {
+    const entry = TestEntry{ .name = "test", .passed = true };
+    try std.testing.expectEqualStrings("", entry.error_message);
+    try std.testing.expectEqual(@as(u64, 0), entry.duration_ns);
+}
