@@ -148,3 +148,31 @@ test "TestSuite empty" {
     try std.testing.expectEqual(@as(usize, 0), suite.failed());
     try std.testing.expectEqual(@as(u64, 0), suite.totalDuration());
 }
+
+test "TestSuite writeJunitXml basic" {
+    var suite: TestSuite(10) = .{};
+    try suite.add(.{ .name = "test_auth", .passed = true, .duration_ns = 1000000 });
+    try suite.add(.{ .name = "test_fail", .passed = false, .duration_ns = 500000, .error_message = "oops" });
+    var buf: [1024]u8 = undefined;
+    var stream = std.io.fixedBufferStream(&buf);
+    try suite.writeJunitXml(stream.writer());
+    const xml = stream.getWritten();
+    try std.testing.expect(std.mem.indexOf(u8, xml, "<?xml") != null);
+    try std.testing.expect(std.mem.indexOf(u8, xml, "<testsuite") != null);
+    try std.testing.expect(std.mem.indexOf(u8, xml, "test_auth") != null);
+    try std.testing.expect(std.mem.indexOf(u8, xml, "<failure") != null);
+}
+
+test "TestSuite single test pass rate" {
+    var suite: TestSuite(10) = .{};
+    try suite.add(.{ .name = "only", .passed = true, .duration_ns = 42 });
+    try std.testing.expectEqual(@as(usize, 1), suite.count);
+    try std.testing.expectEqual(@as(usize, 1), suite.passed());
+    try std.testing.expectEqual(@as(usize, 0), suite.failed());
+}
+
+test "TestEntry zero duration" {
+    const entry = TestEntry{ .name = "instant", .passed = true, .duration_ns = 0 };
+    try std.testing.expectEqual(@as(u64, 0), entry.duration_ns);
+    try std.testing.expect(entry.passed);
+}
