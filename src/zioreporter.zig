@@ -176,3 +176,27 @@ test "TestEntry zero duration" {
     try std.testing.expectEqual(@as(u64, 0), entry.duration_ns);
     try std.testing.expect(entry.passed);
 }
+
+test "TestSuite writeJunitXml all passed" {
+    var suite: TestSuite(10) = .{};
+    try suite.add(.{ .name = "t1", .passed = true, .duration_ns = 500000 });
+    try suite.add(.{ .name = "t2", .passed = true, .duration_ns = 300000 });
+    var buf: [512]u8 = undefined;
+    var stream = std.io.fixedBufferStream(&buf);
+    try suite.writeJunitXml(stream.writer());
+    const xml = stream.getWritten();
+    try std.testing.expect(std.mem.indexOf(u8, xml, "failures=\"0\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, xml, "<failure") == null);
+}
+
+test "TestSuite writeJunitXml with failures" {
+    var suite: TestSuite(10) = .{};
+    try suite.add(.{ .name = "t1", .passed = true, .duration_ns = 100 });
+    try suite.add(.{ .name = "t2", .passed = false, .duration_ns = 200, .error_message = "assert failed" });
+    var buf: [512]u8 = undefined;
+    var stream = std.io.fixedBufferStream(&buf);
+    try suite.writeJunitXml(stream.writer());
+    const xml = stream.getWritten();
+    try std.testing.expect(std.mem.indexOf(u8, xml, "failures=\"1\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, xml, "assert failed") != null);
+}
