@@ -1,10 +1,32 @@
 # zioreporter
 
-Test reporting for Zig. Suite tracking, pass/fail counts, duration timing, error capture.
+Test reporting for Zig. Suite tracking, pass/fail counts, duration timing, JUnit XML export.
 
-Collect test results into a suite. Track pass/fail counts, total duration, and error messages per test.
+## The pitch
 
-## Quick start
+Collect test results into a suite. Track pass/fail counts, total duration, and export to JUnit XML.
+
+```zig
+const zioreporter = @import("zioreporter");
+
+var suite: zioreporter.TestSuite(100) = .{};
+
+// Record test results
+try suite.add(.{ .name = "test_auth", .passed = true, .duration_ns = 1500 });
+try suite.add(.{ .name = "test_signup", .passed = false, .duration_ns = 2000, .error_message = "duplicate key" });
+try suite.add(.{ .name = "test_logout", .passed = true, .duration_ns = 300 });
+
+const passed = suite.passed();          // 2
+const failed = suite.failed();          // 1
+const duration = suite.totalDuration(); // 3800ns
+
+// Export as JUnit XML for CI integration
+var buf: [4096]u8 = undefined;
+var stream = std.io.fixedBufferStream(&buf);
+try suite.writeJunitXml(stream.writer());
+```
+
+## Install
 
 ```bash
 zig fetch --save git+https://github.com/deblasis/zioreporter
@@ -22,34 +44,13 @@ exe.root_module.addImport("zioreporter", dep.module("zioreporter"));
 
 Requires Zig 0.16.
 
-## Example output
-
-`zig build run-example` produces:
-
-```
-=== zioreporter example ===
-
-Test Suite Results:
-  Passed:  3/5
-  Failed:  2
-  Total:   5100ns
-
-Details:
-  PASS test_auth (1500ns)
-  PASS test_login (2000ns)
-  FAIL test_signup: duplicate key
-  PASS test_logout (300ns)
-  FAIL test_perms: permission denied
-```
-
-See [examples/example.zig](examples/example.zig) for the source.
-
 ## API
 
 - `TestSuite(max).add(entry)` — record a test result
 - `.passed()` / `.failed()` — count pass/fail
-- `.totalDuration()` — sum of all test durations
-- `TestEntry{ .name, .passed, .error_message, .duration_ns }` — individual result
+- `.totalDuration()` — sum of durations
+- `.writeJunitXml(writer)` — JUnit XML export
+- `TestEntry{ .name, .passed, .error_message, .duration_ns }`
 
 ## Compatibility
 
