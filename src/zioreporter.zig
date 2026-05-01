@@ -127,3 +127,24 @@ test "TestEntry defaults" {
     try std.testing.expectEqualStrings("", entry.error_message);
     try std.testing.expectEqual(@as(u64, 0), entry.duration_ns);
 }
+
+test "TestEntry failure with message" {
+    const entry = TestEntry{ .name = "test", .passed = false, .error_message = "expected 5, got 3" };
+    try std.testing.expect(!entry.passed);
+    try std.testing.expectEqualStrings("expected 5, got 3", entry.error_message);
+}
+
+test "TestSuite duration calculation" {
+    var suite: TestSuite(20) = .{};
+    try suite.add(.{ .name = "t1", .passed = true, .duration_ns = 1000 });
+    try suite.add(.{ .name = "t2", .passed = true, .duration_ns = 2000 });
+    try suite.add(.{ .name = "t3", .passed = true, .duration_ns = 3000 });
+    try std.testing.expectEqual(@as(u64, 6000), suite.totalDuration());
+}
+
+test "TestSuite empty" {
+    var suite: TestSuite(20) = .{};
+    try std.testing.expectEqual(@as(usize, 0), suite.passed());
+    try std.testing.expectEqual(@as(usize, 0), suite.failed());
+    try std.testing.expectEqual(@as(u64, 0), suite.totalDuration());
+}
