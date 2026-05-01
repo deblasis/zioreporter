@@ -1,66 +1,62 @@
 # zioreporter
 
-Test reporters and CI integration for Zig
+Test reporting for Zig. Suite tracking, pass/fail counts, duration timing, error capture.
 
-Test reporter library for Zig. JUnit XML, HTML, and JSON output formats. CI/CD integration for GitHub Actions, GitLab CI, and Jenkins.
+Collect test results into a suite. Track pass/fail counts, total duration, and error messages per test.
 
-## Features
+## Quick start
 
-- JUnit XML output
-- HTML report generation
-- JSON test results
-- CI/CD integration
-
-## Quick Start
-
-```zig
-const zioreporter = @import("zioreporter");
-
-pub fn main() !void {
-    // See examples/ for runnable code
-}
-```
-
-## Installation
-
-Add to your `build.zig.zon`:
-
-```zig
-.{
-    .dependencies = .{
-        .zioreporter = .{ .url = "https://github.com/deblasis/zioreporter/archive/refs/heads/main.tar.gz", .hash = "..." },
-    },
-}
+```bash
+zig fetch --save git+https://github.com/deblasis/zioreporter
 ```
 
 Then in your `build.zig`:
 
 ```zig
-const zioreporter = b.dependency("zioreporter", .{
+const dep = b.dependency("zioreporter", .{
     .target = target,
     .optimize = optimize,
 });
-exe.root_module.addImport("zioreporter", zioreporter.module("zioreporter"));
+exe.root_module.addImport("zioreporter", dep.module("zioreporter"));
 ```
 
-## Examples
+Requires Zig 0.16.
 
-Run the included example:
+## Example output
 
-```bash
-zig build run-example
+`zig build run-example` produces:
+
+```
+=== zioreporter example ===
+
+Test Suite Results:
+  Passed:  3/5
+  Failed:  2
+  Total:   5100ns
+
+Details:
+  PASS test_auth (1500ns)
+  PASS test_login (2000ns)
+  FAIL test_signup: duplicate key
+  PASS test_logout (300ns)
+  FAIL test_perms: permission denied
 ```
 
-## API Reference
+See [examples/example.zig](examples/example.zig) for the source.
 
-See [src/zioreporter.zig](src/zioreporter.zig) for full documentation. All public symbols have doc comments.
+## API
+
+- `TestSuite(max).add(entry)` — record a test result
+- `.passed()` / `.failed()` — count pass/fail
+- `.totalDuration()` — sum of all test durations
+- `TestEntry{ .name, .passed, .error_message, .duration_ns }` — individual result
 
 ## Compatibility
 
-- **Zig:** 0.16.0
-- **Platforms:** Linux, macOS, Windows
-- **Breaking changes:** Follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Minor versions may add features, patch versions fix bugs.
+- **Zig**: 0.16.0
+- **Platforms**: Linux, macOS, Windows
+- **Breaking changes**: follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Minor versions add features, patch versions fix bugs.
 
 ## License
 
-MIT
+MIT. Copyright (c) 2026 Alessandro De Blasis.
