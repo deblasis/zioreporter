@@ -200,3 +200,14 @@ test "TestSuite writeJunitXml with failures" {
     try std.testing.expect(std.mem.indexOf(u8, xml, "failures=\"1\"") != null);
     try std.testing.expect(std.mem.indexOf(u8, xml, "assert failed") != null);
 }
+
+test "TestSuite writeJunitXml with test name" {
+    var suite: TestSuite(10) = .{};
+    try suite.add(.{ .name = "test_login", .passed = true, .duration_ns = 200000 });
+    var buf: [256]u8 = undefined;
+    var stream = std.io.fixedBufferStream(&buf);
+    try suite.writeJunitXml(stream.writer());
+    const xml = stream.getWritten();
+    try std.testing.expect(std.mem.indexOf(u8, xml, "test_login") != null);
+    try std.testing.expect(std.mem.indexOf(u8, xml, "time=\"200\"") != null);
+}
