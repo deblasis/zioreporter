@@ -7,6 +7,7 @@ Test reporting for Zig. Suite tracking, pass/fail counts, duration timing, JUnit
 Collect test results into a suite. Track pass/fail counts, total duration, and export to JUnit XML.
 
 ```zig
+const std = @import("std");
 const zioreporter = @import("zioreporter");
 
 var suite: zioreporter.TestSuite(100) = .{};
@@ -22,8 +23,9 @@ const duration = suite.totalDuration(); // 3800ns
 
 // Export as JUnit XML for CI integration
 var buf: [4096]u8 = undefined;
-var stream = std.io.fixedBufferStream(&buf);
-try suite.writeJunitXml(stream.writer());
+var stream = std.Io.Writer.fixed(&buf);
+try suite.writeJunitXml(&stream);
+const xml = stream.buffered();
 ```
 
 ## Install
@@ -49,7 +51,7 @@ Requires Zig 0.16.
 - `TestSuite(max).add(entry)` — record a test result
 - `.passed()` / `.failed()` — count pass/fail
 - `.totalDuration()` — sum of durations
-- `.writeJunitXml(writer)` — JUnit XML export
+- `.writeJunitXml(writer)` — JUnit XML export, times in whole milliseconds
 - `TestEntry{ .name, .passed, .error_message, .duration_ns }`
 
 ## Compatibility

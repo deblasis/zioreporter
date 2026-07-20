@@ -9,7 +9,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Initial release
-- JUnit XML output
-- HTML report generation
-- JSON test results
-- CI/CD integration
+- `TestSuite(max)` with `add`, `passed`, `failed` and `totalDuration`
+- JUnit XML output via `writeJunitXml`

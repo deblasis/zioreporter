@@ -2,7 +2,7 @@
 
 ## Overview
 
-Test reporter library for Zig. JUnit XML, HTML, and JSON output formats. CI/CD integration for GitHub Actions, GitLab CI, and Jenkins.
+Test reporter library for Zig. Collects test results in a fixed size suite and writes them out as JUnit XML.
 
 ## Project Structure
 
@@ -24,7 +24,7 @@ zig build               - Build the library
 
 ## Architecture
 
-Single-file library with no external dependencies. All public symbols have doc comments.
+Single-file library with no external dependencies.
 
 ## Testing
 

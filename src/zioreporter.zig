@@ -48,7 +48,7 @@ pub fn TestSuite(comptime max_tests: usize) type {
             return sum;
         }
 
-        /// Format as JUnit XML.
+        /// Format as JUnit XML. Times are written in whole milliseconds.
         pub fn writeJunitXml(self: *Self, writer: anytype) !void {
             try writer.print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", .{});
             try writer.print("<testsuite tests=\"{d}\" failures=\"{d}\" time=\"{d}\">\n", .{
@@ -85,7 +85,6 @@ test "TestSuite totalDuration" {
     try suite.add(.{ .name = "t2", .passed = true, .duration_ns = 3000 });
     try std.testing.expectEqual(@as(u64, 8000), suite.totalDuration());
 }
-
 
 test "TestSuite all passed" {
     var suite: TestSuite(20) = .{};
@@ -134,14 +133,6 @@ test "TestEntry failure with message" {
     try std.testing.expectEqualStrings("expected 5, got 3", entry.error_message);
 }
 
-test "TestSuite duration calculation" {
-    var suite: TestSuite(20) = .{};
-    try suite.add(.{ .name = "t1", .passed = true, .duration_ns = 1000 });
-    try suite.add(.{ .name = "t2", .passed = true, .duration_ns = 2000 });
-    try suite.add(.{ .name = "t3", .passed = true, .duration_ns = 3000 });
-    try std.testing.expectEqual(@as(u64, 6000), suite.totalDuration());
-}
-
 test "TestSuite empty" {
     var suite: TestSuite(20) = .{};
     try std.testing.expectEqual(@as(usize, 0), suite.passed());
@@ -154,9 +145,9 @@ test "TestSuite writeJunitXml basic" {
     try suite.add(.{ .name = "test_auth", .passed = true, .duration_ns = 1000000 });
     try suite.add(.{ .name = "test_fail", .passed = false, .duration_ns = 500000, .error_message = "oops" });
     var buf: [1024]u8 = undefined;
-    var stream = std.io.fixedBufferStream(&buf);
-    try suite.writeJunitXml(stream.writer());
-    const xml = stream.getWritten();
+    var stream = std.Io.Writer.fixed(&buf);
+    try suite.writeJunitXml(&stream);
+    const xml = stream.buffered();
     try std.testing.expect(std.mem.indexOf(u8, xml, "<?xml") != null);
     try std.testing.expect(std.mem.indexOf(u8, xml, "<testsuite") != null);
     try std.testing.expect(std.mem.indexOf(u8, xml, "test_auth") != null);
@@ -182,9 +173,9 @@ test "TestSuite writeJunitXml all passed" {
     try suite.add(.{ .name = "t1", .passed = true, .duration_ns = 500000 });
     try suite.add(.{ .name = "t2", .passed = true, .duration_ns = 300000 });
     var buf: [512]u8 = undefined;
-    var stream = std.io.fixedBufferStream(&buf);
-    try suite.writeJunitXml(stream.writer());
-    const xml = stream.getWritten();
+    var stream = std.Io.Writer.fixed(&buf);
+    try suite.writeJunitXml(&stream);
+    const xml = stream.buffered();
     try std.testing.expect(std.mem.indexOf(u8, xml, "failures=\"0\"") != null);
     try std.testing.expect(std.mem.indexOf(u8, xml, "<failure") == null);
 }
@@ -194,20 +185,21 @@ test "TestSuite writeJunitXml with failures" {
     try suite.add(.{ .name = "t1", .passed = true, .duration_ns = 100 });
     try suite.add(.{ .name = "t2", .passed = false, .duration_ns = 200, .error_message = "assert failed" });
     var buf: [512]u8 = undefined;
-    var stream = std.io.fixedBufferStream(&buf);
-    try suite.writeJunitXml(stream.writer());
-    const xml = stream.getWritten();
+    var stream = std.Io.Writer.fixed(&buf);
+    try suite.writeJunitXml(&stream);
+    const xml = stream.buffered();
     try std.testing.expect(std.mem.indexOf(u8, xml, "failures=\"1\"") != null);
     try std.testing.expect(std.mem.indexOf(u8, xml, "assert failed") != null);
 }
 
 test "TestSuite writeJunitXml with test name" {
     var suite: TestSuite(10) = .{};
-    try suite.add(.{ .name = "test_login", .passed = true, .duration_ns = 200000 });
+    // times in the XML are milliseconds, so 200 ms goes in as 200_000_000 ns
+    try suite.add(.{ .name = "test_login", .passed = true, .duration_ns = 200 * std.time.ns_per_ms });
     var buf: [256]u8 = undefined;
-    var stream = std.io.fixedBufferStream(&buf);
-    try suite.writeJunitXml(stream.writer());
-    const xml = stream.getWritten();
+    var stream = std.Io.Writer.fixed(&buf);
+    try suite.writeJunitXml(&stream);
+    const xml = stream.buffered();
     try std.testing.expect(std.mem.indexOf(u8, xml, "test_login") != null);
     try std.testing.expect(std.mem.indexOf(u8, xml, "time=\"200\"") != null);
 }
