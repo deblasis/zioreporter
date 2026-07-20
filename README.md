@@ -48,10 +48,10 @@ Requires Zig 0.16.
 
 ## API
 
-- `TestSuite(max).add(entry)` — record a test result
-- `.passed()` / `.failed()` — count pass/fail
-- `.totalDuration()` — sum of durations
-- `.writeJunitXml(writer)` — JUnit XML export, times in whole milliseconds
+- `TestSuite(max).add(entry)` - record a test result
+- `.passed()` / `.failed()` - count pass/fail
+- `.totalDuration()` - sum of durations
+- `.writeJunitXml(writer)` - JUnit XML export, times in whole milliseconds
 - `TestEntry{ .name, .passed, .error_message, .duration_ns }`
 
 ## Compatibility
